@@ -1,0 +1,62 @@
+services:
+  # PostgreSQL Database with PostGIS
+  db:
+    image: postgis/postgis:15-3.3
+    container_name: ${DB_NAME}
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: ${REDIS_NAME}
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+
+  # RabbitMQ Message Queue
+  # rabbitmq:
+  #   image: rabbitmq:3-management-alpine
+  #   container_name: ${RABBITMQ_NAME}
+  #   environment:
+  #     RABBITMQ_DEFAULT_USER: ${DB_USER}
+  #     RABBITMQ_DEFAULT_PASS: ${DB_PASSWORD}
+  #   ports:
+  #     - "5672:5672"   # RabbitMQ main port
+  #     - "15672:15672" # Management UI
+  #   volumes:
+  #     - rabbitmq_data:/var/lib/rabbitmq
+
+  # Django Backend (optional - for containerized development)
+  web:
+    build: .
+    container_name: eve_web
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      # - REDIS_URL=redis://redis:6379/0
+      # - RABBITMQ_URL=amqp://${DB_USER}:${DB_PASSWORD}@rabbitmq:5672/
+
+volumes:
+  postgres_data:
+  # redis_data:
+  # rabbitmq_data:
