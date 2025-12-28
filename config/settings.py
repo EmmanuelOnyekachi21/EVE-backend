@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'rest_framework',  # Django REST framework
     'apps.signals',
     'apps.sources',
+    'apps.ingestion',
 ]
 
 MIDDLEWARE = [
