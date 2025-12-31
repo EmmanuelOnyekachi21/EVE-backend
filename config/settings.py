@@ -134,3 +134,87 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Logging Configuration
+LOGS_DIR = BASE_DIR / 'logs'
+LOGS_DIR.mkdir(exist_ok=True)  # Create logs directory if it doesn't exist
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {asctime} {message}',
+            'style': '{',
+        },
+        'json': {
+            'format': '{"time": "%(asctime)s", "level": "%(levelname)s", "module": "%(module)s", "message": "%(message)s"}',
+        },
+    },
+    'filters': {
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'file_ingestion': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'ingestion.log',
+            'maxBytes': 1024 * 1024 * 10,  # 10 MB
+            'backupCount': 5,
+            'formatter': 'verbose',
+        },
+        'file_general': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'general.log',
+            'maxBytes': 1024 * 1024 * 10,  # 10 MB
+            'backupCount': 5,
+            'formatter': 'verbose',
+        },
+        'file_errors': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'errors.log',
+            'maxBytes': 1024 * 1024 * 10,  # 10 MB
+            'backupCount': 5,
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file_general'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'apps.ingestion': {
+            'handlers': ['console', 'file_ingestion', 'file_errors'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'apps.signals': {
+            'handlers': ['console', 'file_general', 'file_errors'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'apps.sources': {
+            'handlers': ['console', 'file_general', 'file_errors'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+    'root': {
+        'handlers': ['console', 'file_general', 'file_errors'],
+        'level': 'INFO',
+    },
+}
